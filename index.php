@@ -1,122 +1,119 @@
 <?php
-require_once './backend/_dbconnect.php';
-require_once './backend/navbar.php';
+include 'backend/_dbconnect.php';
+require_once 'backend/navbar.php';
 
-// Initialize the $showAlert, $showUpdateAlert, and $showError variables
-$showAlert = false;
-$showUpdateAlert = false;
-$showError = false;
-
-// Check if the delete_id parameter is present in the URL
-if (isset($_GET['delete_id'])) {
-    $deleteId = $_GET['delete_id'];
-
-    // Delete the record from the database
-    $sql = "DELETE FROM `empdetails` WHERE `empid` = '$deleteId'";
-    $result = mysqli_query($conn, $sql);
-
-    // Check if the deletion was successful
-    if ($result) {
-        $showAlert = true;
-    } else {
-        $showError = true;
-    }
-}
-
-// Check if the form is submitted
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    // Process the form data and update the database record
-    $empId = $_GET['empid'];
+// Check if form is submitted for adding new data
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = $_POST['name'];
     $address = $_POST['address'];
     $phoneno = $_POST['phoneno'];
     $email = $_POST['email'];
     $department = $_POST['department'];
 
-    $sql = "UPDATE `empdetails` SET `name` = '$name', `address` = '$address', `phoneno` = '$phoneno',
-            `email` = '$email', `department` = '$department' WHERE `empid` = '$empId'";
+    // Prepare and execute the SQL insert statement
+    $stmt = $conn->prepare("INSERT INTO empdetails (name, address, phoneno, email, department) VALUES (?, ?, ?, ?, ?)");
+    $stmt->bind_param("ssiss", $name, $address, $phoneno, $email, $department);
 
-    $result = mysqli_query($conn, $sql);
-    if ($result) {
-        $showUpdateAlert = true;
+    if ($stmt->execute()) {
+        $message = "Data added successfully!";
     } else {
-        $showError = true;
+        $error = "Error adding data: " . $conn->error;
+    }
+
+    $stmt->close();
+}
+
+// Check if the table is updated or deleted
+if (isset($_GET['action'])) {
+    $action = $_GET['action'];
+    if ($action === 'updated') {
+        $message = "Data updated successfully!";
+    } elseif ($action === 'deleted') {
+        $warning = "Data deleted!";
     }
 }
+
+// Retrieve data from the database
+$sql = "SELECT * FROM empdetails";
+$result = $conn->query($sql);
 
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html>
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employees</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    <title>Employee Details</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
-    <link rel="stylesheet" href="./assets/style.css">
 </head>
 
 <body>
-    <div class="container justify-content-center">
-        <?php if ($showAlert): ?>
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <strong>Success!</strong> Employee deleted successfully.
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="container text-center col-md-9">
+
+        <?php if (isset($message)): ?>
+            <div class="alert alert-success" role="alert">
+                <?php echo $message; ?>
             </div>
         <?php endif; ?>
 
-        <?php if ($showUpdateAlert): ?>
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <strong>Success!</strong> Employee updated successfully.
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <?php if (isset($error)): ?>
+            <div class="alert alert-danger" role="alert">
+                <?php echo $error; ?>
             </div>
         <?php endif; ?>
 
-        <?php if ($showError): ?>
-            <div class="alert alert-danger alert-dismissible fade show" role="alert" style="background-color: red;">
-                <strong>Error!</strong> Failed to perform the operation.
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <?php if (isset($warning)): ?>
+            <div class="alert alert-warning" role="alert">
+                <?php echo $warning; ?>
             </div>
         <?php endif; ?>
 
-        <table class="table">
+        <h2>Employee List</h2>
+        <table class="table table-striped">
             <thead>
                 <tr>
-                    <th scope="col">Employee ID</th>
-                    <th scope="col">Name</th>
-                    <th scope="col">Address</th>
-                    <th scope="col">Phone No.</th>
-                    <th scope="col">Email</th>
-                    <th scope="col">Department</th>
-                    <th scope="col">Actions</th>
+                    <th>Employee ID</th>
+                    <th>Name</th>
+                    <th>Address</th>
+                    <th>Phone Number</th>
+                    <th>Email</th>
+                    <th>Department</th>
+                    <th>Registration Date</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-                <?php
-                if ($conn) {
-                    $sql = "SELECT * FROM `empdetails`";
-                    $result = mysqli_query($conn, $sql);
-                    if ($result) {
-                        while ($row = mysqli_fetch_assoc($result)) {
-                            echo "
-                            <tr>
-                                <th scope='row'>" . $row['empid'] . "</th>
-                                <td>" . $row['name'] . "</td>
-                                <td>" . $row['address'] . "</td>
-                                <td>" . $row['phoneno'] . "</td>
-                                <td>" . $row['email'] . "</td>
-                                <td>" . $row['department'] . "</td>
-                                <td>
-                                    <a href='edit.php?id=" . $row['empid'] . "' class='btn btn-primary btn-sm'>Edit</a>
-                                    <a href='?delete_id=" . $row['empid'] . "' class='btn btn-danger btn-sm' onclick='return confirm(\"Are you sure you want to delete this employee?\")'>Delete</a>
-                                </td>
-                            </tr>";
-                        }
-                    }
-                }
-                ?>
+                <?php while ($row = $result->fetch_assoc()): ?>
+                    <tr>
+                        <td>
+                            <?php echo $row['empid']; ?>
+                        </td>
+                        <td>
+                            <?php echo $row['name']; ?>
+                        </td>
+                        <td>
+                            <?php echo $row['address']; ?>
+                        </td>
+                        <td>
+                            <?php echo $row['phoneno']; ?>
+                        </td>
+                        <td>
+                            <?php echo $row['email']; ?>
+                        </td>
+                        <td>
+                            <?php echo $row['department']; ?>
+                        </td>
+                        <td>
+                            <?php echo $row['Reg_date']; ?>
+                        </td>
+                        <td>
+                            <a href="edit.php?empid=<?php echo $row['empid']; ?>" class="btn btn-sm btn-primary">Edit</a>
+                            <a href="delete.php?empid=<?php echo $row['empid']; ?>" class="btn btn-sm btn-danger"
+                                onclick="return confirm('Are you sure you want to delete this record?')">Delete</a>
+                        </td>
+                    </tr>
+                <?php endwhile; ?>
             </tbody>
         </table>
     </div>
@@ -124,6 +121,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
         crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>
