@@ -79,6 +79,7 @@ $result = $conn->query($sql);
                     <th>Phone Number</th>
                     <th>Email</th>
                     <th>Department</th>
+                    <th>Updated Comments</th>
                     <th>Registration Date</th>
                     <th>Actions</th>
                 </tr>
@@ -105,12 +106,15 @@ $result = $conn->query($sql);
                             <?php echo $row['department']; ?>
                         </td>
                         <td>
+                            <?php echo $row['updated_comments']; ?>
+                        </td>
+                        <td>
                             <?php echo $row['Reg_date']; ?>
                         </td>
                         <td>
                             <a href="edit.php?empid=<?php echo $row['empid']; ?>" class="btn btn-sm btn-primary">Edit</a>
-                            <a href="delete.php?empid=<?php echo $row['empid']; ?>" class="btn btn-sm btn-danger"
-                                onclick="return confirm('Are you sure you want to delete this record?')">Delete</a>
+                            <a href="delete.php?empid=<?php echo $row['empid']; ?>&name=<?php echo $row['name']; ?>"
+                                class="btn btn-sm btn-danger">Delete</a>
                         </td>
                     </tr>
                 <?php endwhile; ?>

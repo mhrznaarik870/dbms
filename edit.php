@@ -62,7 +62,7 @@ if (isset($_GET['empid'])) {
 </head>
 
 <body>
-    <div class="container text-center col-md-9">
+    <div class="container text-center col-md-3">
         <?php if (isset($error)): ?>
             <div class="alert alert-danger" role="alert">
                 <?php echo $error; ?>
