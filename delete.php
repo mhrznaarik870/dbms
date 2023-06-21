@@ -1,78 +1,61 @@
 <?php
-include './backend/_dbconnect.php';
-include './backend/navbar.php';
+include 'backend/_dbconnect.php';
+include 'backend/navbar.php';
 
-// Check if employee ID is provided for deletion
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Check if confirmation button is clicked
+    if (isset($_POST['confirm'])) {
+        $empid = $_POST['empid'];
+        $resignedComments = $_POST['resigned_comments'];
+
+        // Retrieve employee details from empdetails table
+        $stmt = $conn->prepare("SELECT * FROM empdetails WHERE empid = ?");
+        $stmt->bind_param("i", $empid);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+
+        // Insert employee details into resigned_employees table
+        $stmt = $conn->prepare("INSERT INTO resigned_employees (empid, name, address, phoneno, email, department, resigned_comments, Reg_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("isssssss", $row['empid'], $row['name'], $row['address'], $row['phoneno'], $row['email'], $row['department'], $resignedComments, $row['Reg_date']);
+        $stmt->execute();
+
+        // Delete employee from empdetails table
+        $stmt = $conn->prepare("DELETE FROM empdetails WHERE empid = ?");
+        $stmt->bind_param("i", $empid);
+        $stmt->execute();
+
+        $message = "Employee deleted successfully!";
+        header("Location: resignedEmployees.php");
+    } else {
+        // Cancellation button is clicked, redirect back to the employee list page
+        header("Location: employee_list.php");
+        exit();
+    }
+}
+
+// Retrieve data from the database based on the empid
 if (isset($_GET['empid'])) {
     $empid = $_GET['empid'];
-
-    // Check if form is submitted for adding comments
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $comment = $_POST['comment'];
-
-        // Prepare and execute the SQL update statement
-        $stmt = $conn->prepare("UPDATE empdetails SET updated_comments=? WHERE empid=?");
-        $stmt->bind_param("si", $comment, $empid);
-
-        if ($stmt->execute()) {
-            $message = "Comment added successfully!";
-            // Comment added successfully, show the confirmation alert
-            echo '<script>alert("' . $message . '");</script>';
-        } else {
-            $error = "Error adding comment: " . $conn->error;
-        }
-
-        $stmt->close();
-
-        // Insert records with comments into the 'resigned_employees' table
-        $insertStmt = $conn->prepare("INSERT INTO resigned_employees (empid, name, address, phoneno, email, department, resignation_comments) SELECT empid, name, address, phoneno, email, department, updated_comments FROM empdetails WHERE empid=?");
-        $insertStmt->bind_param("i", $empid);
-        if ($insertStmt->execute()) {
-            $insertMessage = "Record inserted into 'resigned_employees' table!";
-        } else {
-            $insertError = "Error inserting record into 'resigned_employees' table: " . $conn->error;
-        }
-        $insertStmt->close();
-    }
-
-    // Retrieve employee details from the 'empdetails' table
-    $stmt = $conn->prepare("SELECT * FROM empdetails WHERE empid=?");
-    $stmt->bind_param("i", $empid);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    $sql = "SELECT * FROM empdetails WHERE empid = '$empid'";
+    $result = $conn->query($sql);
     $row = $result->fetch_assoc();
-    $stmt->close();
-
-    // Display the employee details
-    if ($row) {
-        $empid = $row['empid'];
-        $name = $row['name'];
-        $address = $row['address'];
-        $phoneno = $row['phoneno'];
-        $email = $row['email'];
-        $department = $row['department'];
-        $comment = $row['updated_comments'];
-    } else {
-        $error = "Employee details not found!";
-    }
-} else {
-    $empid = $name = $address = $phoneno = $email = $department = $comment = ""; // Initialize empty values
 }
+
 ?>
 
 <!DOCTYPE html>
 <html>
 
 <head>
-    <title>Add Comment</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Delete Employee</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
 </head>
 
 <body>
-    <div class="container text-center col-md-6">
-        <h2>Add Comment for Employee ID:
-            <?php echo $empid; ?>
-        </h2>
+    <div class="container text-center col-md-9">
 
         <?php if (isset($message)): ?>
             <div class="alert alert-success" role="alert">
@@ -80,69 +63,57 @@ if (isset($_GET['empid'])) {
             </div>
         <?php endif; ?>
 
-        <?php if (isset($error)): ?>
-            <div class="alert alert-danger" role="alert">
-                <?php echo $error; ?>
-            </div>
-        <?php endif; ?>
+        <h2>Delete Employee</h2>
 
-        <?php if (isset($insertMessage)): ?>
-            <div class="alert alert-success" role="alert">
-                <?php echo $insertMessage; ?>
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Employee Details</h5>
+                        <ul class="list-group">
+                            <li class="list-group-item">
+                                <strong>Employee ID: </strong>
+                                <?php echo $row['empid']; ?>
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Name: </strong>
+                                <?php echo $row['name']; ?>
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Address: </strong>
+                                <?php echo $row['address']; ?>
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Phone Number: </strong>
+                                <?php echo $row['phoneno']; ?>
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Email: </strong>
+                                <?php echo $row['email']; ?>
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Department: </strong>
+                                <?php echo $row['department']; ?>
+                            </li>
+                            <li class="list-group-item">
+                                <form action="" method="POST"
+                                    onsubmit="return confirm('Are you sure you want to delete this employee?');">
+                                    <input type="hidden" name="empid" value="<?php echo $row['empid']; ?>">
+                                    <input type="text" name="resigned_comments" placeholder="Resigned Comments">
+                                    <button type="submit" name="confirm" class="btn btn-danger">Confirm</button>
+                                    <a href="employee_list.php" class="btn btn-primary">Cancel</a>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </div>
-        <?php endif; ?>
-
-        <?php if (isset($insertError)): ?>
-            <div class="alert alert-danger" role="alert">
-                <?php echo $insertError; ?>
-            </div>
-        <?php endif; ?>
-
-        <?php if (!empty($empid)): ?>
-            <div class="text-left">
-                <h4>Employee Details:</h4>
-                <p><strong>Employee ID:</strong>
-                    <?php echo $empid; ?>
-                </p>
-                <p><strong>Name:</strong>
-                    <?php echo $name; ?>
-                </p>
-                <p><strong>Address:</strong>
-                    <?php echo $address; ?>
-                </p>
-                <p><strong>Phone No.:</strong>
-                    <?php echo $phoneno; ?>
-                </p>
-                <p><strong>Email:</strong>
-                    <?php echo $email; ?>
-                </p>
-                <p><strong>Department:</strong>
-                    <?php echo $department; ?>
-                </p>
-            </div>
-        <?php endif; ?>
-
-        <form method="POST" action="">
-            <div class="form-group">
-                <label for="comment">Resignation Comment:</label>
-                <textarea class="form-control" id="comment" name="comment" rows="3"><?php echo $comment; ?></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary" onclick="return confirmDelete()">Add Comment</button>
-        </form>
+        </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        function confirmDelete() {
-            var confirmDelete = confirm("Are you sure you want to add the comment and delete the employee record?");
-            if (confirmDelete) {
-                window.location.href = "delete.php?empid=<?php echo $empid; ?>";
-            } else {
-                alert("Deletion canceled.");
-                return false;
-            }
-        }
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+        crossorigin="anonymous"></script>
 </body>
 
 </html>

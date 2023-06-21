@@ -10,19 +10,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $phoneno = $_POST['phoneno'];
     $email = $_POST['email'];
     $department = $_POST['department'];
+    $updated_comments = $_POST['updated_comments'];
 
-    // Prepare and execute the SQL update statement
-    $stmt = $conn->prepare("UPDATE empdetails SET name=?, address=?, phoneno=?, email=?, department=? WHERE empid=?");
-    $stmt->bind_param("ssissi", $name, $address, $phoneno, $email, $department, $empid);
 
-    if ($stmt->execute()) {
-        $stmt->close();
-        header("Location: index.php?action=updated");
-        exit;
+    // Prepare the SQL update statement
+    $stmt = $conn->prepare("UPDATE empdetails SET name=?, address=?, phoneno=?, email=?, department=?, updated_comments=? WHERE empid=?");
+
+    // Check if the prepare() function succeeded
+    if ($stmt) {
+        // Bind parameters and execute the statement
+        $stmt->bind_param("ssisssi", $name, $address, $phoneno, $email, $department, $updated_comments, $empid);
+        if ($stmt->execute()) {
+            $stmt->close();
+            header("Location: employee_list.php?action=updated");
+            exit;
+        } else {
+            $error = "Error updating data: " . $conn->error;
+        }
     } else {
-        $error = "Error updating data: " . $conn->error;
+        $error = "Error preparing statement: " . $conn->error;
     }
 }
+
+
 
 // Retrieve the employee details based on the empid
 if (isset($_GET['empid'])) {
@@ -40,6 +50,7 @@ if (isset($_GET['empid'])) {
         $phoneno = $row['phoneno'];
         $email = $row['email'];
         $department = $row['department'];
+        $updated_comments = $row['updated_comments'];
     } else {
         // No employee found with the given empid
         $error = "No employee found with the specified ID.";
@@ -50,6 +61,8 @@ if (isset($_GET['empid'])) {
     // No empid specified
     $error = "No employee ID specified.";
 }
+
+
 ?>
 
 <!DOCTYPE html>
@@ -77,7 +90,7 @@ if (isset($_GET['empid'])) {
                 </div>
                 <div class="mb-3">
                     <label for="address" class="form-label">Address</label>
-                    <input type="text" class="form-control" id="address" name="address" value="<?php echo $address; ?>"
+                    <input type="text" class="form-control" id="address" name="address" value="<?php echo $address; ?> "
                         required>
                 </div>
                 <div class="mb-3">
@@ -94,6 +107,13 @@ if (isset($_GET['empid'])) {
                     <input type="text" class="form-control" id="department" name="department"
                         value="<?php echo $department; ?>" required>
                 </div>
+                <div class="mb-3">
+                    <label for="updated_comments" class="form-label">Update the Comments for changing the details</label>
+                    <input type="text" class="form-control" id="updated_comments" name="updated_comments"
+                        value="<?php echo $updated_comments; ?>" required>
+
+                </div>
+
                 <button type="submit" class="btn btn-primary">Update</button>
             </form>
         <?php endif; ?>

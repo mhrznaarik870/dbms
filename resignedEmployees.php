@@ -2,8 +2,8 @@
 include 'backend/_dbconnect.php';
 require_once 'backend/navbar.php';
 
-// Retrieve resigned employees data from the database
-$sql = "SELECT * FROM resigned_employees";
+// Retrieve resigned employees data from the database, sorted by registration date
+$sql = "SELECT * FROM resigned_employees ORDER BY Reg_date DESC";
 $result = $conn->query($sql);
 ?>
 
@@ -29,6 +29,7 @@ $result = $conn->query($sql);
                     <th>Email</th>
                     <th>Department</th>
                     <th>Resignation Comments</th>
+                    <th>Registration Date</th>
                 </tr>
             </thead>
             <tbody>
@@ -53,7 +54,10 @@ $result = $conn->query($sql);
                             <?php echo $row['department']; ?>
                         </td>
                         <td>
-                            <?php echo $row['resignation_comments']; ?>
+                            <?php echo $row['resigned_comments']; ?>
+                        </td>
+                        <td>
+                            <?php echo $row['Reg_date']; ?>
                         </td>
                     </tr>
                 <?php endwhile; ?>

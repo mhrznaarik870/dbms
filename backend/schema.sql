@@ -7,14 +7,14 @@ CREATE TABLE IF NOT EXISTS empdetails (
   phoneno VARCHAR(20),
   email VARCHAR(255),
   department VARCHAR(255),
-  updated_comments text(100),
+  updated_comments VARCHAR(1000),
   Reg_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- Table for resigned employees
 CREATE TABLE IF NOT EXISTS resigned_employees (
   empid INT PRIMARY KEY,
-   name VARCHAR(255) ,
+  name VARCHAR(255) ,
   address VARCHAR(255),
   phoneno VARCHAR(20),
   email VARCHAR(255),
