@@ -11,7 +11,7 @@
     <?php
     // Define the correct username and password
     $correctUsername = "admin";
-    $correctPassword = "password";
+    $correctPassword = "admin";
 
     // Check if the form is submitted
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
